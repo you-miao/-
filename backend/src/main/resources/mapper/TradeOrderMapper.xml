@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.campus.trade.mapper.TradeOrderMapper">
+
+    <select id="selectOrderPage" resultType="com.campus.trade.entity.TradeOrder">
+        SELECT o.*,
+               p.title AS product_title,
+               p.cover_img AS product_cover_img,
+               seller.nickname AS seller_name,
+               buyer.nickname AS buyer_name
+        FROM trade_order o
+        LEFT JOIN product p ON o.product_id = p.id
+        LEFT JOIN sys_user seller ON o.seller_id = seller.id
+        LEFT JOIN sys_user buyer ON o.buyer_id = buyer.id
+        WHERE 1=1
+        <if test="userId != null and role == 'buyer'">
+            AND o.buyer_id = #{userId}
+        </if>
+        <if test="userId != null and role == 'seller'">
+            AND o.seller_id = #{userId}
+        </if>
+        <if test="status != null">
+            AND o.status = #{status}
+        </if>
+        ORDER BY o.create_time DESC
+    </select>
+
+    <select id="selectOrderDetail" resultType="com.campus.trade.entity.TradeOrder">
+        SELECT o.*,
+               p.title AS product_title,
+               p.cover_img AS product_cover_img,
+               seller.nickname AS seller_name,
+               buyer.nickname AS buyer_name
+        FROM trade_order o
+        LEFT JOIN product p ON o.product_id = p.id
+        LEFT JOIN sys_user seller ON o.seller_id = seller.id
+        LEFT JOIN sys_user buyer ON o.buyer_id = buyer.id
+        WHERE o.id = #{id}
+    </select>
+
+</mapper>

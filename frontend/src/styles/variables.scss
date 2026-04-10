@@ -1,0 +1,39 @@
+// 主色调 - 专业蓝色商务风
+$primary-color: #2b5ce6;
+$primary-light: #4a7af7;
+$primary-dark: #1a3fb5;
+$primary-bg: #f0f5ff;
+
+// 辅助色
+$success-color: #34c759;
+$warning-color: #f5a623;
+$danger-color: #e74c3c;
+$info-color: #8590a6;
+
+// 中性色
+$text-primary: #1d2129;
+$text-regular: #4e5969;
+$text-secondary: #86909c;
+$text-placeholder: #c9cdd4;
+
+$bg-color: #f7f8fa;
+$bg-white: #ffffff;
+$border-color: #e5e6eb;
+$border-light: #f2f3f5;
+
+// 阴影
+$shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
+$shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+$shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+
+// 圆角
+$radius-sm: 4px;
+$radius-md: 8px;
+$radius-lg: 12px;
+
+// 侧边栏
+$sidebar-width: 220px;
+$sidebar-bg: #1d2b3a;
+$sidebar-text: #b7bec8;
+$sidebar-active-bg: $primary-color;
+$header-height: 60px;

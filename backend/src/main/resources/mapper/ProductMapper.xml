@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.campus.trade.mapper.ProductMapper">
+
+    <select id="selectProductPage" resultType="com.campus.trade.entity.Product">
+        SELECT p.*,
+               c.name AS category_name,
+               u.nickname AS publisher_name,
+               u.avatar AS publisher_avatar
+        FROM product p
+        LEFT JOIN product_category c ON p.category_id = c.id
+        LEFT JOIN sys_user u ON p.user_id = u.id
+        <if test="tagId != null">
+            INNER JOIN product_tag_relation ptr ON ptr.product_id = p.id AND ptr.tag_id = #{tagId}
+        </if>
+        WHERE p.deleted = 0
+        <if test="status != null">
+            AND p.status = #{status}
+        </if>
+        <if test="categoryId != null">
+            AND (p.category_id = #{categoryId} OR p.category_id IN (SELECT id FROM product_category WHERE parent_id = #{categoryId}))
+        </if>
+        <if test="productType != null">
+            AND p.product_type = #{productType}
+        </if>
+        <if test="campus != null and campus != ''">
+            AND p.campus = #{campus}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND (p.title LIKE CONCAT('%', #{keyword}, '%') OR p.description LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <if test="userId != null">
+            AND p.user_id = #{userId}
+        </if>
+        <if test="minPrice != null">
+            AND p.price &gt;= #{minPrice}
+        </if>
+        <if test="maxPrice != null">
+            AND p.price &lt;= #{maxPrice}
+        </if>
+        ORDER BY p.create_time DESC
+    </select>
+
+    <select id="selectProductDetail" resultType="com.campus.trade.entity.Product">
+        SELECT p.*,
+               c.name AS category_name,
+               u.nickname AS publisher_name,
+               u.avatar AS publisher_avatar
+        FROM product p
+        LEFT JOIN product_category c ON p.category_id = c.id
+        LEFT JOIN sys_user u ON p.user_id = u.id
+        WHERE p.id = #{id} AND p.deleted = 0
+    </select>
+
+    <select id="selectRecommendProducts" resultType="com.campus.trade.entity.Product">
+        SELECT p.*,
+               c.name AS category_name,
+               u.nickname AS publisher_name,
+               u.avatar AS publisher_avatar
+        FROM product p
+        LEFT JOIN product_category c ON p.category_id = c.id
+        LEFT JOIN sys_user u ON p.user_id = u.id
+        WHERE p.deleted = 0 AND p.status = 1
+        <if test="userId != null and excludeUserId">
+            AND p.user_id != #{userId}
+        </if>
+        <if test="userId != null">
+            AND p.category_id IN (
+                SELECT DISTINCT p2.category_id FROM user_favorite uf
+                INNER JOIN product p2 ON p2.id = uf.product_id
+                WHERE uf.user_id = #{userId}
+                UNION
+                SELECT DISTINCT p3.category_id FROM user_browse_log bl
+                INNER JOIN product p3 ON p3.id = bl.product_id
+                WHERE bl.user_id = #{userId}
+            )
+        </if>
+        ORDER BY p.view_count DESC, p.create_time DESC
+    </select>
+
+</mapper>
