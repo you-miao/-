@@ -16,14 +16,25 @@
           <el-icon><DataAnalysis /></el-icon>
           <span>数据概览</span>
         </el-menu-item>
+
+        <el-menu-item 
+          v-if="userStore.isAdmin || userStore.userInfo?.role === 'ROLE_CHARITY'" 
+          index="/admin/charity"
+        >
+          <el-icon><Present /></el-icon>
+          <span>社团工作台</span>
+        </el-menu-item>
+
         <el-menu-item index="/admin/products">
           <el-icon><Goods /></el-icon>
           <span>商品管理</span>
         </el-menu-item>
+        
         <el-menu-item index="/admin/users">
           <el-icon><User /></el-icon>
           <span>用户管理</span>
         </el-menu-item>
+        
         <el-menu-item index="/admin/comments">
           <el-icon><ChatDotRound /></el-icon>
           <span>评论管理</span>
@@ -40,7 +51,7 @@
           <el-dropdown trigger="click">
             <div class="admin-user">
               <el-avatar :size="30" icon="User" />
-              <span>{{ userStore.nickname }}</span>
+              <span>{{ userStore.userInfo?.nickname || userStore.nickname }}</span>
             </div>
             <template #dropdown>
               <el-dropdown-menu>
@@ -60,6 +71,8 @@
 <script setup>
 import { useUserStore } from '@/stores/user'
 import { useRouter } from 'vue-router'
+// 💡 确保引入了图标
+import { Shop, DataAnalysis, Goods, User, ChatDotRound, Present } from '@element-plus/icons-vue'
 
 const userStore = useUserStore()
 const router = useRouter()

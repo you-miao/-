@@ -6,18 +6,25 @@
           <el-icon :size="24"><Shop /></el-icon>
           <span>校园闲置物交易平台</span>
         </div>
+        
         <nav class="nav-menu">
           <router-link to="/" class="nav-item">首页</router-link>
+          
+          <router-link to="/donation/hall" class="nav-item" style="color: #67c23a; font-weight: bold;">
+            💚 爱心公益
+          </router-link>
           <router-link v-if="userStore.isLoggedIn" to="/publish" class="nav-item">发布商品</router-link>
           <router-link v-if="userStore.isLoggedIn" to="/my-orders" class="nav-item">我的订单</router-link>
           <router-link v-if="userStore.isLoggedIn" to="/wallet" class="nav-item">我的钱包</router-link>
           <router-link v-if="userStore.isLoggedIn" to="/my-exchanges" class="nav-item">我的交换</router-link>
         </nav>
+        
         <div class="header-right">
           <template v-if="userStore.isLoggedIn">
             <router-link v-if="userStore.isAdmin" to="/admin" class="admin-btn">
               <el-button type="primary" plain size="small">管理后台</el-button>
             </router-link>
+            
             <el-dropdown trigger="click">
               <div class="user-info">
                 <el-avatar :size="32" :src="imgUrl(userStore.userInfo.avatar)" icon="User" />
@@ -29,12 +36,14 @@
                   <el-dropdown-item @click="$router.push('/user')">个人中心</el-dropdown-item>
                   <el-dropdown-item @click="$router.push('/my-products')">我的发布</el-dropdown-item>
                   <el-dropdown-item @click="$router.push('/my-favorites')">我的收藏</el-dropdown-item>
+                  <el-dropdown-item @click="$router.push('/donation/my')">我的捐赠</el-dropdown-item>
                   <el-dropdown-item @click="$router.push('/wallet')">我的钱包</el-dropdown-item>
                   <el-dropdown-item divided @click="handleLogout">退出登录</el-dropdown-item>
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
           </template>
+          
           <template v-else>
             <el-button type="primary" @click="$router.push('/login')">登录</el-button>
             <el-button @click="$router.push('/register')">注册</el-button>

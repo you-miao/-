@@ -42,19 +42,27 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf().disable()
-            .cors()
-            .and()
-            .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            .and()
-            .authorizeRequests()
+                .cors()
+                .and()
+                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and()
+                .authorizeRequests()
                 .antMatchers("/auth/**").permitAll()
                 .antMatchers("/doc.html", "/webjars/**", "/swagger-resources/**", "/v2/api-docs/**").permitAll()
-                .antMatchers("/uploads/**").permitAll()
+
+                // 💡 核心修改点：同时放行带有 /api 和不带 /api 的图片请求路径！
+                .antMatchers("/uploads/**", "/api/uploads/**").permitAll()
+
                 .antMatchers(HttpMethod.GET, "/product/**", "/category/**").permitAll()
                 .antMatchers("/admin/**").hasAuthority("ROLE_ADMIN")
+
+                // ▼ ▼ ▼ 这里是为你新加的爱心公益模块公开接口的放行配置 ▼ ▼ ▼
+                .antMatchers("/api/donation/public/**").permitAll()
+                // ▲ ▲ ▲ ======================================== ▲ ▲ ▲
+
                 .anyRequest().authenticated()
-            .and()
-            .exceptionHandling()
+                .and()
+                .exceptionHandling()
                 .authenticationEntryPoint((request, response, authException) -> {
                     response.setContentType(MediaType.APPLICATION_JSON_VALUE);
                     response.setCharacterEncoding("UTF-8");
@@ -73,8 +81,8 @@ public class SecurityConfig {
                     result.put("message", "没有操作权限");
                     response.getWriter().write(new ObjectMapper().writeValueAsString(result));
                 })
-            .and()
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .and()
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
