@@ -56,7 +56,9 @@ const defaultImg = 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c
 const formatImageUrl = (url) => {
   if (!url) return '';
   if (url.startsWith('http')) return url; // 兼容默认的网图
-  return 'http://localhost:8088' + (url.startsWith('/') ? '' : '/') + url;
+  
+  // 核心修复：同样加上 /api 路径前缀
+  return 'http://localhost:8088/api' + (url.startsWith('/') ? '' : '/') + url;
 }
 
 const calculatePercentage = (current, target) => {

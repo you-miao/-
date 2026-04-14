@@ -124,15 +124,14 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/utils/request'
 import { useUserStore } from '@/stores/user'
 
-const userStore = useUserStore()
-
 // 💡 解决图片裂开的拼接函数
 const formatImageUrl = (url) => {
   if (!url) return '';
   if (url.startsWith('http')) return url;
-  return 'http://localhost:8088' + (url.startsWith('/') ? '' : '/') + url;
+  
+  // 核心修复：在这里的 8088 后面加上 /api
+  return 'http://localhost:8088/api' + (url.startsWith('/') ? '' : '/') + url;
 }
-
 const activeTab = ref('orders')
 
 // ================= 物资接收管理逻辑 =================
