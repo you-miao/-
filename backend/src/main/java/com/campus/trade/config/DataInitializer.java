@@ -1,8 +1,10 @@
 package com.campus.trade.config;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.campus.trade.entity.SysRole;
 import com.campus.trade.entity.SysUser;
 import com.campus.trade.entity.SysUserRole;
+import com.campus.trade.mapper.SysRoleMapper;
 import com.campus.trade.mapper.SysUserMapper;
 import com.campus.trade.mapper.SysUserRoleMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +22,8 @@ public class DataInitializer implements CommandLineRunner {
     @Resource
     private SysUserMapper userMapper;
     @Resource
+    private SysRoleMapper roleMapper;
+    @Resource
     private SysUserRoleMapper userRoleMapper;
     @Resource
     private PasswordEncoder passwordEncoder;
@@ -29,8 +33,25 @@ public class DataInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) {
         migrateSchema();
+        initRoles();
         initAdmin();
+        initCharityAccount();
         initTestUsers();
+    }
+
+    private void initRoles() {
+        SysRole charityRole = roleMapper.selectOne(
+                new LambdaQueryWrapper<SysRole>().eq(SysRole::getRoleKey, "ROLE_CHARITY"));
+        if (charityRole == null) {
+            SysRole role = new SysRole();
+            role.setRoleName("社团人员");
+            role.setRoleKey("ROLE_CHARITY");
+            role.setSortOrder(3);
+            role.setStatus(1);
+            role.setRemark("爱心捐赠后台运营账号");
+            roleMapper.insert(role);
+            log.info("初始化角色: ROLE_CHARITY");
+        }
     }
 
     private void migrateSchema() {
@@ -73,13 +94,58 @@ public class DataInitializer implements CommandLineRunner {
         }
     }
 
+    private void initCharityAccount() {
+        SysRole charityRole = roleMapper.selectOne(
+                new LambdaQueryWrapper<SysRole>().eq(SysRole::getRoleKey, "ROLE_CHARITY"));
+        if (charityRole == null) {
+            log.warn("未找到 ROLE_CHARITY，跳过社团账号初始化");
+            return;
+        }
+
+        SysUser charity = userMapper.selectOne(
+                new LambdaQueryWrapper<SysUser>().eq(SysUser::getUsername, "charity"));
+
+        if (charity == null) {
+            charity = new SysUser();
+            charity.setUsername("charity");
+            charity.setPassword(passwordEncoder.encode("charity123"));
+            charity.setNickname("社团人员");
+            charity.setRealName("社团人员");
+            charity.setGender(1);
+            charity.setStatus(1);
+            userMapper.insert(charity);
+            log.info("初始化社团账号: charity / charity123");
+        } else {
+            charity.setPassword(passwordEncoder.encode("charity123"));
+            userMapper.updateById(charity);
+            log.info("社团账号密码已重置: charity / charity123");
+        }
+
+        Long relationCount = userRoleMapper.selectCount(
+                new LambdaQueryWrapper<SysUserRole>()
+                        .eq(SysUserRole::getUserId, charity.getId())
+                        .eq(SysUserRole::getRoleId, charityRole.getId()));
+        if (relationCount == 0) {
+            SysUserRole userRole = new SysUserRole();
+            userRole.setUserId(charity.getId());
+            userRole.setRoleId(charityRole.getId());
+            userRoleMapper.insert(userRole);
+        }
+
+        Long charityUserCount = userRoleMapper.selectCount(
+                new LambdaQueryWrapper<SysUserRole>().eq(SysUserRole::getRoleId, charityRole.getId()));
+        if (charityUserCount > 1) {
+            log.warn("检测到多个 ROLE_CHARITY 账号，请仅保留 charity 账号（当前数量: {}）", charityUserCount);
+        }
+    }
+
     private void initTestUsers() {
         String[][] users = {
-                {"zhangsan", "123456", "张三", "张三", "1", "13800001001", "2022010101", "东校区"},
-                {"lisi",     "123456", "李四", "李四", "2", "13800001002", "2022010102", "西校区"},
-                {"wangwu",   "123456", "王五", "王五", "1", "13800001003", "2022010103", "东校区"},
-                {"zhaoliu",  "123456", "赵六", "赵六", "2", "13800001004", "2022010104", "南校区"},
-                {"sunqi",    "123456", "孙七", "孙七", "1", "13800001005", "2022010105", "西校区"},
+                {"zhangsan", "123456", "张三", "张三", "1", "13800001001", "2022010101"},
+                {"lisi",     "123456", "李四", "李四", "2", "13800001002", "2022010102"},
+                {"wangwu",   "123456", "王五", "王五", "1", "13800001003", "2022010103"},
+                {"zhaoliu",  "123456", "赵六", "赵六", "2", "13800001004", "2022010104"},
+                {"sunqi",    "123456", "孙七", "孙七", "1", "13800001005", "2022010105"},
         };
 
         for (String[] u : users) {
@@ -94,7 +160,6 @@ public class DataInitializer implements CommandLineRunner {
                 user.setGender(Integer.parseInt(u[4]));
                 user.setPhone(u[5]);
                 user.setStudentNo(u[6]);
-                user.setCampus(u[7]);
                 user.setStatus(1);
                 userMapper.insert(user);
 

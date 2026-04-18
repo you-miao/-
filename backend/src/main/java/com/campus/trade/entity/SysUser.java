@@ -19,7 +19,6 @@ public class SysUser {
     private String email;
     private String avatar;
     private String studentNo;
-    private String campus;
     private BigDecimal balance;
     private Integer status;
     private LocalDateTime lastLoginTime;

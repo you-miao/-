@@ -8,6 +8,7 @@ export const useUserStore = defineStore('user', () => {
 
   const isLoggedIn = computed(() => !!token.value)
   const isAdmin = computed(() => userInfo.value.role === 'ROLE_ADMIN')
+  const isCharity = computed(() => userInfo.value.role === 'ROLE_CHARITY')
   const userId = computed(() => userInfo.value.userId)
   const nickname = computed(() => userInfo.value.nickname || userInfo.value.username)
 
@@ -37,5 +38,5 @@ export const useUserStore = defineStore('user', () => {
     setUserInfo(userInfo.value)
   }
 
-  return { token, userInfo, isLoggedIn, isAdmin, userId, nickname, setLoginInfo, logout, updateUserInfo }
+  return { token, userInfo, isLoggedIn, isAdmin, isCharity, userId, nickname, setLoginInfo, logout, updateUserInfo }
 })

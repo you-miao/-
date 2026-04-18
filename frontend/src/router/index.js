@@ -54,19 +54,20 @@ const routes = [
   {
     path: '/admin',
     component: () => import('@/layouts/AdminLayout.vue'),
-    meta: { requireAuth: true }, // 💡 移除了全局 requireAdmin，在下面子路由里分别控制
+    meta: { requireAuth: true },
     children: [
       { path: '', name: 'Dashboard', component: () => import('@/views/admin/Dashboard.vue'), meta: { title: '管理首页', requireAdmin: true } },
       { path: 'products', name: 'AdminProducts', component: () => import('@/views/admin/ProductAudit.vue'), meta: { title: '商品管理', requireAdmin: true } },
       { path: 'users', name: 'AdminUsers', component: () => import('@/views/admin/UserManage.vue'), meta: { title: '用户管理', requireAdmin: true } },
       { path: 'comments', name: 'AdminComments', component: () => import('@/views/admin/CommentManage.vue'), meta: { title: '评论管理', requireAdmin: true } },
+      { path: 'donation-audit', name: 'DonationAudit', component: () => import('@/views/admin/DonationAudit.vue'), meta: { title: '爱心捐赠审核', requireAdmin: true } },
       
       // --- 💡 社团工作台 (专属后台页面) ---
       {
         path: 'charity',
         name: 'CharityDashboard',
         component: () => import('@/views/donation/CharityDashboard.vue'),
-        meta: { title: '社团工作台', requireCharity: true } 
+        meta: { title: '社团工作台', requireCharity: true }
       }
     ]
   }
@@ -80,17 +81,19 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   document.title = to.meta.title ? `${to.meta.title} - 校园闲置物交易平台` : '校园闲置物交易平台'
   const userStore = useUserStore()
-  
+
   if (to.meta.requireAuth && !userStore.isLoggedIn) {
     // 拦截未登录用户
     next({ path: '/login', query: { redirect: to.fullPath } })
+  } else if (to.path === '/admin' && userStore.isCharity) {
+    // 社团账号登录后台时，默认进入社团工作台
+    next('/admin/charity')
   } else if (to.meta.requireAdmin && !userStore.isAdmin) {
     // 拦截非管理员访问超级后台
-    next('/')
-  } else if (to.meta.requireCharity && userStore.userInfo?.role !== 'ROLE_CHARITY' && userStore.userInfo?.role !== 'ROLE_ADMIN' && !userStore.isAdmin) {
-    // 拦截非社团（和非管理员）访问社团工作台
-    // 💡 考虑到你现有的逻辑，如果是 Admin 也可以进社团后台
-    next('/')
+    next(userStore.isCharity ? '/admin/charity' : '/')
+  } else if (to.meta.requireCharity && !userStore.isCharity) {
+    // 拦截非社团访问社团工作台
+    next(userStore.isAdmin ? '/admin' : '/')
   } else {
     // 放行
     next()

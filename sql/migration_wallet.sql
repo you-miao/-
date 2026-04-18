@@ -3,7 +3,7 @@ USE `campus_trade`;
 
 -- 若已存在 balance 列会报错，可忽略或手动注释本行
 ALTER TABLE `sys_user`
-    ADD COLUMN `balance` DECIMAL(10,2) NOT NULL DEFAULT 0.00 COMMENT '账户余额（平台内）' AFTER `campus`;
+    ADD COLUMN `balance` DECIMAL(10,2) NOT NULL DEFAULT 0.00 COMMENT '账户余额（平台内）' AFTER `student_no`;
 
 CREATE TABLE IF NOT EXISTS `recharge_record` (
     `id`             BIGINT        NOT NULL AUTO_INCREMENT COMMENT '充值记录ID',

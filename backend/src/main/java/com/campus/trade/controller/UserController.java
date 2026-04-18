@@ -2,6 +2,7 @@ package com.campus.trade.controller;
 
 import com.campus.trade.common.Result;
 import com.campus.trade.dto.PasswordDTO;
+import com.campus.trade.dto.UpdateUserInfoDTO;
 import com.campus.trade.entity.SysUser;
 import com.campus.trade.entity.UserAddress;
 import com.campus.trade.security.SecurityUtil;
@@ -30,9 +31,8 @@ public class UserController {
 
     @ApiOperation("修改个人信息")
     @PutMapping("/info")
-    public Result<Void> updateUserInfo(@RequestBody SysUser user) {
-        user.setId(SecurityUtil.getCurrentUserId());
-        userService.updateUserInfo(user);
+    public Result<Void> updateUserInfo(@Valid @RequestBody UpdateUserInfoDTO dto) {
+        userService.updateUserInfo(SecurityUtil.getCurrentUserId(), dto);
         return Result.success();
     }
 
@@ -60,6 +60,13 @@ public class UserController {
     @PostMapping("/address")
     public Result<Void> saveAddress(@RequestBody UserAddress address) {
         userService.saveAddress(SecurityUtil.getCurrentUserId(), address);
+        return Result.success();
+    }
+
+    @ApiOperation("设置默认收货地址")
+    @PutMapping("/address/{id}/default")
+    public Result<Void> setDefaultAddress(@PathVariable Long id) {
+        userService.setDefaultAddress(SecurityUtil.getCurrentUserId(), id);
         return Result.success();
     }
 

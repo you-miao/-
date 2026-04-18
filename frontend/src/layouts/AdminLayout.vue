@@ -1,7 +1,7 @@
 <template>
   <div class="admin-layout">
     <aside class="sidebar">
-      <div class="sidebar-logo" @click="$router.push('/')">
+      <div class="sidebar-logo" @click="handleLogoClick">
         <el-icon :size="22" color="#fff"><Shop /></el-icon>
         <span>管理后台</span>
       </div>
@@ -12,32 +12,34 @@
         text-color="#b7bec8"
         active-text-color="#ffffff"
       >
-        <el-menu-item index="/admin">
+        <el-menu-item v-if="userStore.isAdmin" index="/admin">
           <el-icon><DataAnalysis /></el-icon>
           <span>数据概览</span>
         </el-menu-item>
 
-        <el-menu-item 
-          v-if="userStore.isAdmin || userStore.userInfo?.role === 'ROLE_CHARITY'" 
-          index="/admin/charity"
-        >
+        <el-menu-item v-if="userStore.isCharity" index="/admin/charity">
           <el-icon><Present /></el-icon>
           <span>社团工作台</span>
         </el-menu-item>
 
-        <el-menu-item index="/admin/products">
+        <el-menu-item v-if="userStore.isAdmin" index="/admin/products">
           <el-icon><Goods /></el-icon>
           <span>商品管理</span>
         </el-menu-item>
-        
-        <el-menu-item index="/admin/users">
+
+        <el-menu-item v-if="userStore.isAdmin" index="/admin/users">
           <el-icon><User /></el-icon>
           <span>用户管理</span>
         </el-menu-item>
-        
-        <el-menu-item index="/admin/comments">
+
+        <el-menu-item v-if="userStore.isAdmin" index="/admin/comments">
           <el-icon><ChatDotRound /></el-icon>
           <span>评论管理</span>
+        </el-menu-item>
+
+        <el-menu-item v-if="userStore.isAdmin" index="/admin/donation-audit">
+          <el-icon><Present /></el-icon>
+          <span>爱心捐赠审核</span>
         </el-menu-item>
       </el-menu>
     </aside>
@@ -47,15 +49,19 @@
           <span class="page-name">{{ $route.meta.title }}</span>
         </div>
         <div class="admin-header-right">
-          <el-button text @click="$router.push('/')">返回前台</el-button>
+          <el-button v-if="!userStore.isCharity" text @click="$router.push('/')">返回前台</el-button>
           <el-dropdown trigger="click">
             <div class="admin-user">
-              <el-avatar :size="30" icon="User" />
-              <span>{{ userStore.userInfo?.nickname || userStore.nickname }}</span>
+              <el-avatar :size="30" :src="avatarUrl" icon="User" />
+              <span>{{
+                userStore.userInfo?.nickname || userStore.nickname
+              }}</span>
             </div>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item @click="handleLogout">退出登录</el-dropdown-item>
+                <el-dropdown-item @click="handleLogout"
+                  >退出登录</el-dropdown-item
+                >
               </el-dropdown-menu>
             </template>
           </el-dropdown>
@@ -69,22 +75,44 @@
 </template>
 
 <script setup>
-import { useUserStore } from '@/stores/user'
-import { useRouter } from 'vue-router'
+import { computed } from "vue";
+import { useUserStore } from "@/stores/user";
+import { useRouter } from "vue-router";
 // 💡 确保引入了图标
-import { Shop, DataAnalysis, Goods, User, ChatDotRound, Present } from '@element-plus/icons-vue'
+import {
+  Shop,
+  DataAnalysis,
+  Goods,
+  User,
+  ChatDotRound,
+  Present,
+} from "@element-plus/icons-vue";
 
-const userStore = useUserStore()
-const router = useRouter()
+const userStore = useUserStore();
+const router = useRouter();
+const avatarUrl = computed(() => {
+  const avatar = userStore.userInfo?.avatar;
+  if (!avatar) return "";
+  if (avatar.startsWith("http")) return avatar;
+  return `/api${avatar.startsWith("/") ? "" : "/"}${avatar}`;
+});
 
 function handleLogout() {
-  userStore.logout()
-  router.push('/login')
+  userStore.logout();
+  router.push("/login");
+}
+
+function handleLogoClick() {
+  if (userStore.isCharity) {
+    router.push("/admin/charity");
+    return;
+  }
+  router.push("/");
 }
 </script>
 
 <style lang="scss" scoped>
-@use '@/styles/variables' as *;
+@use "@/styles/variables" as *;
 .admin-layout {
   display: flex;
   height: 100vh;
@@ -107,7 +135,7 @@ function handleLogout() {
   font-size: 16px;
   font-weight: 700;
   cursor: pointer;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 .el-menu {
   border-right: none;
@@ -118,7 +146,7 @@ function handleLogout() {
       background-color: $primary-color !important;
     }
     &:hover {
-      background-color: rgba(255,255,255,0.06) !important;
+      background-color: rgba(255, 255, 255, 0.06) !important;
     }
   }
 }

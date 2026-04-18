@@ -7,11 +7,13 @@ import com.campus.trade.dto.ProductQueryDTO;
 import com.campus.trade.entity.Comment;
 import com.campus.trade.entity.Product;
 import com.campus.trade.entity.SysUser;
+import com.campus.trade.entity.DonationCampaign; // 💡 新增导入
 import com.campus.trade.security.SecurityUtil;
 import com.campus.trade.service.AdminService;
 import com.campus.trade.service.CommentService;
 import com.campus.trade.service.ProductService;
 import com.campus.trade.service.UserService;
+import com.campus.trade.service.DonationService; // 💡 新增导入
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.web.bind.annotation.*;
@@ -33,6 +35,8 @@ public class AdminController {
     private UserService userService;
     @Resource
     private CommentService commentService;
+    @Resource
+    private DonationService donationService; // 💡 新增注入
 
     @ApiOperation("仪表盘统计")
     @GetMapping("/dashboard")
@@ -76,5 +80,24 @@ public class AdminController {
             @RequestParam(defaultValue = "1") int pageNum,
             @RequestParam(defaultValue = "20") int pageSize) {
         return Result.success(commentService.getAdminCommentPage(status, pageNum, pageSize));
+    }
+
+    // ================= 💡 新增：捐赠活动审核相关接口 =================
+
+    @ApiOperation("捐赠活动管理列表")
+    @GetMapping("/donation/list")
+    public Result<IPage<DonationCampaign>> donationList(
+            @RequestParam(required = false) Integer status,
+            @RequestParam(defaultValue = "1") int pageNum,
+            @RequestParam(defaultValue = "20") int pageSize) {
+        // 返回包含待审核状态的列表
+        return Result.success(donationService.getAdminDonationPage(status, pageNum, pageSize));
+    }
+
+    // 修改后
+    @ApiOperation("审核捐赠活动")
+    @PostMapping("/donation/audit")
+    public Result<String> auditDonation(@RequestBody AuditDTO auditDTO) {
+        return donationService.auditDonationCampaign(auditDTO);
     }
 }

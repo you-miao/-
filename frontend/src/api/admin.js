@@ -23,3 +23,22 @@ export function updateUserStatus(userId, status) {
 export function getAdminComments(params) {
   return request.get('/admin/comments', { params })
 }
+// ====== 捐赠活动审核 API ======
+
+// 获取捐赠活动列表 (管理员后台)
+export function getAdminDonationList(params) {
+  return request({
+    url: '/admin/donation/list',
+    method: 'get',
+    params
+  })
+}
+
+// 提交审核结果 (重点：参数格式已完全对齐后端的 AuditDTO)
+export function auditDonation(data) {
+  return request({
+    url: '/admin/donation/audit',
+    method: 'post',
+    data
+  })
+}

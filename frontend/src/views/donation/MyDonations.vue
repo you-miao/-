@@ -9,6 +9,11 @@
 
       <el-table :data="donationList" v-loading="loading" stripe style="width: 100%">
         <el-table-column prop="orderNo" label="订单编号" width="180" />
+        <el-table-column prop="campaignTitle" label="所属活动" min-width="180">
+          <template #default="scope">
+            {{ scope.row.campaignTitle || '自愿捐赠（未绑定活动）' }}
+          </template>
+        </el-table-column>
         <el-table-column prop="itemName" label="捐赠物品" />
         <el-table-column prop="createTime" label="捐赠时间" width="180" />
         <el-table-column prop="status" label="当前状态">
@@ -25,16 +30,39 @@
         </el-table-column>
       </el-table>
     </el-card>
+
+    <el-dialog v-model="detailVisible" title="捐赠详情" width="620px" destroy-on-close>
+      <el-descriptions v-if="currentDetail" :column="1" border>
+        <el-descriptions-item label="订单编号">{{ currentDetail.orderNo || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="所属活动">{{ currentDetail.campaignTitle || '自愿捐赠（未绑定活动）' }}</el-descriptions-item>
+        <el-descriptions-item label="活动ID">{{ currentDetail.campaignId || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="捐赠物品">{{ currentDetail.itemName || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="联系人">{{ currentDetail.donorName || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="联系电话">{{ currentDetail.donorPhone || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="捐赠地址">{{ currentDetail.donorAddress || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="当前状态">
+          <el-tag :type="getStatusTag(currentDetail.status)">
+            {{ getStatusText(currentDetail.status) }}
+          </el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item label="捐赠时间">{{ currentDetail.createTime || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="备注">{{ currentDetail.remark || '-' }}</el-descriptions-item>
+      </el-descriptions>
+      <template #footer>
+        <el-button @click="detailVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
-import request from '@/utils/request' // 使用项目统一的 axios 实例
+import { getMyDonations } from '@/api/donation'
 
 const loading = ref(false)
 const donationList = ref([])
+const detailVisible = ref(false)
+const currentDetail = ref(null)
 
 // 获取状态标签样式
 const getStatusTag = (status) => {
@@ -64,21 +92,20 @@ const getStatusText = (status) => {
 const fetchMyDonations = async () => {
   loading.value = true
   try {
-    // 这里的接口路径需对应后端 DonationController 中的用户查询接口
-    const res = await request.get('/donation/user/my-list')
+    const res = await getMyDonations()
     if (res.code === 200) {
       donationList.value = res.data
     }
   } catch (error) {
     console.error(error)
-    // ElMessage.error('获取记录失败') // 初始调试时可以先注释掉，等待后端接口完全配好
   } finally {
     loading.value = false
   }
 }
 
 const handleDetail = (row) => {
-  ElMessage.info('查看订单: ' + row.orderNo)
+  currentDetail.value = row
+  detailVisible.value = true
 }
 
 onMounted(() => {

@@ -32,8 +32,9 @@
         </template>
       </el-table-column>
       <el-table-column prop="createTime" label="下单时间" width="170" />
-      <el-table-column label="操作" width="160">
+      <el-table-column label="操作" width="220">
         <template #default="{ row }">
+          <el-button link type="primary" @click="openDetail(row.id)">查看详情</el-button>
           <el-button v-if="row.status === 0 && role === 'buyer'" link type="primary" @click="openPay(row.id)">付款</el-button>
           <el-button v-if="row.status === 0 && role === 'buyer'" link type="info" @click="handleCancel(row.id)">取消</el-button>
           <el-button v-if="row.status === 1 && role === 'buyer'" link type="success" @click="handleReceive(row.id)">确认收货</el-button>
@@ -57,12 +58,43 @@
         <el-button type="primary" :loading="paySubmitting" @click="confirmPay">确认支付</el-button>
       </template>
     </el-dialog>
+
+    <el-dialog v-model="detailVisible" title="订单详情" width="680px" destroy-on-close>
+      <div v-loading="detailLoading">
+        <el-descriptions v-if="detailOrder" :column="1" border>
+          <el-descriptions-item label="订单号">{{ detailOrder.orderNo || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="商品">{{ detailOrder.productTitle || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="订单金额">¥{{ detailOrder.price ?? '-' }}</el-descriptions-item>
+          <el-descriptions-item label="订单状态">
+            <el-tag :type="orderStatusMap[detailOrder.status]?.type" size="small">
+              {{ orderStatusMap[detailOrder.status]?.label || '未知' }}
+            </el-tag>
+          </el-descriptions-item>
+          <el-descriptions-item label="购买人">{{ detailOrder.buyerName || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="购买人ID">{{ detailOrder.buyerId || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="联系方式">{{ detailOrder.contactInfo || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="交付方式">{{ deliveryTypeText(detailOrder.deliveryType) }}</el-descriptions-item>
+          <el-descriptions-item v-if="detailOrder.deliveryType === 2" label="收货人">{{ detailOrder.receiverName || '-' }}</el-descriptions-item>
+          <el-descriptions-item v-if="detailOrder.deliveryType === 2" label="收货手机号">{{ detailOrder.receiverPhone || '-' }}</el-descriptions-item>
+          <el-descriptions-item v-if="detailOrder.deliveryType === 2" label="收货地址">{{ detailOrder.receiverAddress || '-' }}</el-descriptions-item>
+          <el-descriptions-item v-else label="取货地点">{{ detailOrder.pickupLocation || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="下单时间">{{ detailOrder.createTime || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="支付时间">{{ detailOrder.payTime || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="收货时间">{{ detailOrder.receiveTime || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="取消原因">{{ detailOrder.cancelReason || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="订单备注">{{ detailOrder.remark || '-' }}</el-descriptions-item>
+        </el-descriptions>
+      </div>
+      <template #footer>
+        <el-button @click="detailVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import { getBuyOrders, getSellOrders, payOrder, confirmReceive, cancelOrder } from '@/api/order'
+import { getBuyOrders, getSellOrders, payOrder, confirmReceive, cancelOrder, getOrderDetail } from '@/api/order'
 import { getWalletBalance } from '@/api/wallet'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
@@ -83,6 +115,11 @@ const orderStatusMap = {
   1: { label: '待收货', type: '' },
   2: { label: '已完成', type: 'success' },
   3: { label: '已取消', type: 'info' }
+}
+
+function deliveryTypeText(type) {
+  if (type === 2) return '送货上门'
+  return '线下自提'
 }
 
 async function loadData() {
@@ -140,6 +177,22 @@ async function handleCancel(id) {
   await cancelOrder(id, '用户主动取消')
   ElMessage.success('订单已取消')
   loadData()
+}
+
+const detailVisible = ref(false)
+const detailLoading = ref(false)
+const detailOrder = ref(null)
+
+async function openDetail(id) {
+  detailVisible.value = true
+  detailLoading.value = true
+  detailOrder.value = null
+  try {
+    const res = await getOrderDetail(id)
+    detailOrder.value = res.data
+  } finally {
+    detailLoading.value = false
+  }
 }
 
 onMounted(() => loadData())

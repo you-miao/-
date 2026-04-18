@@ -1,6 +1,7 @@
 package com.campus.trade.service.impl;
 
 import cn.hutool.core.util.IdUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.campus.trade.common.BusinessException;
@@ -41,6 +42,12 @@ public class OrderServiceImpl implements OrderService {
         }
         if (product.getUserId().equals(buyerId)) {
             throw new BusinessException("不能购买自己的商品");
+        }
+        Long activeOrderCount = orderMapper.selectCount(new LambdaQueryWrapper<TradeOrder>()
+                .eq(TradeOrder::getProductId, product.getId())
+                .in(TradeOrder::getStatus, 0, 1, 2));
+        if (activeOrderCount > 0) {
+            throw new BusinessException("该商品已被下单，请选择其他商品");
         }
 
         TradeOrder order = new TradeOrder();
@@ -86,6 +93,16 @@ public class OrderServiceImpl implements OrderService {
         if (order.getStatus() != 0) {
             throw new BusinessException("订单状态不正确");
         }
+        Product product = productMapper.selectById(order.getProductId());
+        if (product == null || product.getStatus() != 1) {
+            throw new BusinessException("商品状态已变化，无法继续支付");
+        }
+        Long paidOrderCount = orderMapper.selectCount(new LambdaQueryWrapper<TradeOrder>()
+                .eq(TradeOrder::getProductId, order.getProductId())
+                .in(TradeOrder::getStatus, 1, 2));
+        if (paidOrderCount > 0) {
+            throw new BusinessException("该商品已被他人购买");
+        }
 
         BigDecimal price = order.getPrice();
         if (payMethod == 2) {
@@ -114,7 +131,6 @@ public class OrderServiceImpl implements OrderService {
         payment.setPayTime(LocalDateTime.now());
         paymentMapper.insert(payment);
 
-        Product product = productMapper.selectById(order.getProductId());
         product.setStatus(4);
         productMapper.updateById(product);
     }

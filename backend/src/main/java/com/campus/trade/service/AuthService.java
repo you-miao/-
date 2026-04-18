@@ -7,4 +7,6 @@ import java.util.Map;
 public interface AuthService {
     Map<String, Object> login(LoginDTO dto, String ip, String device);
     void register(RegisterDTO dto);
+    boolean isUsernameAvailable(String username);
+    boolean isStudentNoAvailable(String studentNo);
 }

@@ -21,6 +21,8 @@ public class DonationOrder {
     private Integer donationType; // 1-定向募捐 2-自愿捐赠
     private Integer status; // 0-待取件 1-社团已接收 2-已发往受助区 3-已公示 4-已取消
     private String remark;
+    @TableField(exist = false)
+    private String campaignTitle;
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
     @TableField(fill = FieldFill.INSERT_UPDATE)

@@ -36,4 +36,16 @@ public class AuthController {
         authService.register(dto);
         return Result.success("注册成功", null);
     }
+
+    @ApiOperation("检查用户名是否可用")
+    @GetMapping("/check-username")
+    public Result<Boolean> checkUsername(@RequestParam String username) {
+        return Result.success(authService.isUsernameAvailable(username));
+    }
+
+    @ApiOperation("检查学号是否可用")
+    @GetMapping("/check-student-no")
+    public Result<Boolean> checkStudentNo(@RequestParam String studentNo) {
+        return Result.success(authService.isStudentNoAvailable(studentNo));
+    }
 }

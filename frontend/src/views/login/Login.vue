@@ -57,7 +57,12 @@ async function handleLogin() {
     const res = await login(form)
     userStore.setLoginInfo(res.data)
     ElMessage.success('登录成功')
-    const redirect = route.query.redirect || '/'
+    let redirect = route.query.redirect || '/'
+    if (userStore.isCharity) {
+      redirect = '/admin/charity'
+    } else if (userStore.isAdmin) {
+      redirect = '/admin'
+    }
     router.push(redirect)
   } finally {
     loading.value = false

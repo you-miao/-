@@ -38,17 +38,48 @@
       v-else 
       description="当前暂无进行中的募捐活动，去后台发布一个试试吧！" 
     />
+
+    <div class="announce-section">
+      <h3 class="announce-title">捐赠去向公示</h3>
+      <el-timeline v-if="announcements.length > 0">
+        <el-timeline-item
+          v-for="item in announcements"
+          :key="item.id"
+          :timestamp="item.createTime"
+          placement="top"
+        >
+          <el-card shadow="never">
+            <h4 style="margin: 0 0 8px 0;">{{ item.title }}</h4>
+            <p style="margin: 0 0 8px 0; color: #606266;">受助信息：{{ item.recipientInfo || '未填写' }}</p>
+            <p style="margin: 0 0 10px 0; color: #303133; line-height: 1.7;">{{ item.content }}</p>
+            <div v-if="item.proofImages" class="proof-grid">
+              <el-image
+                v-for="(img, idx) in item.proofImages.split(',')"
+                :key="idx"
+                :src="formatImageUrl(img)"
+                :preview-src-list="item.proofImages.split(',').map(url => formatImageUrl(url))"
+                preview-teleported
+                fit="cover"
+                class="proof-image"
+              />
+            </div>
+          </el-card>
+        </el-timeline-item>
+      </el-timeline>
+      <el-empty v-else description="暂无公示公告" />
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import request from '@/utils/request'
 import { useRouter } from 'vue-router'
+import { getCampaigns, getAnnouncements } from '@/api/donation'
 
 const router = useRouter()
 const campaigns = ref([])
+const announcements = ref([])
 // 默认封面图
 const defaultImg = 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80'
 
@@ -70,12 +101,23 @@ const calculatePercentage = (current, target) => {
 
 const fetchCampaigns = async () => {
   try {
-    const res = await request.get('/donation/public/campaigns')
+    const res = await getCampaigns()
     if (res.code === 200) {
       campaigns.value = res.data || []
     }
   } catch (error) {
     ElMessage.error('无法连接后端接口，请检查 Spring Boot 是否启动')
+  }
+}
+
+const fetchAnnouncements = async () => {
+  try {
+    const res = await getAnnouncements()
+    if (res.code === 200) {
+      announcements.value = res.data || []
+    }
+  } catch (error) {
+    ElMessage.error('获取公示公告失败')
   }
 }
 
@@ -91,6 +133,7 @@ const handleDonateClick = (campaign) => {
 
 onMounted(() => {
   fetchCampaigns()
+  fetchAnnouncements()
 })
 </script>
 
@@ -107,4 +150,8 @@ onMounted(() => {
 .item-desc { color: #606266; font-size: 14px; line-height: 1.6; height: 44px; overflow: hidden; margin-bottom: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .progress-info { display: flex; justify-content: space-between; font-size: 13px; color: #909399; margin-bottom: 8px; padding-top: 10px; }
 .action-btn { width: 100%; border-radius: 8px; font-weight: bold; }
+.announce-section { margin-top: 36px; }
+.announce-title { margin: 0 0 16px 0; color: #303133; }
+.proof-grid { display: flex; gap: 10px; flex-wrap: wrap; }
+.proof-image { width: 86px; height: 86px; border-radius: 6px; border: 1px solid #ebeef5; }
 </style>

@@ -23,7 +23,6 @@ CREATE TABLE `sys_user` (
     `email`         VARCHAR(100) DEFAULT NULL            COMMENT '邮箱',
     `avatar`        VARCHAR(500) DEFAULT NULL            COMMENT '头像URL',
     `student_no`    VARCHAR(30)  DEFAULT NULL            COMMENT '学号',
-    `campus`        VARCHAR(100) DEFAULT NULL            COMMENT '校区',
     `balance`       DECIMAL(10,2) NOT NULL DEFAULT 0.00  COMMENT '账户余额（平台内）',
     `status`        TINYINT      DEFAULT 1               COMMENT '账号状态：0-禁用 1-正常',
     `last_login_time` DATETIME   DEFAULT NULL            COMMENT '最后登录时间',
@@ -36,7 +35,6 @@ CREATE TABLE `sys_user` (
     UNIQUE KEY `uk_phone` (`phone`),
     UNIQUE KEY `uk_student_no` (`student_no`),
     KEY `idx_status` (`status`),
-    KEY `idx_campus` (`campus`),
     KEY `idx_create_time` (`create_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户表';
 
@@ -490,13 +488,48 @@ CREATE TABLE `stat_category_hot` (
 -- 六、初始化数据
 -- =========================================================
 
--- 初始化角色
+-- 初始化角色（可重复执行）
 INSERT INTO `sys_role` (`id`, `role_name`, `role_key`, `sort_order`, `status`, `remark`) VALUES
 (1, '管理员', 'ROLE_ADMIN', 1, 1, '系统管理员，拥有全部权限'),
-(2, '普通用户', 'ROLE_USER', 2, 1, '普通注册用户');
+(2, '普通用户', 'ROLE_USER', 2, 1, '普通注册用户'),
+(3, '社团人员', 'ROLE_CHARITY', 3, 1, '爱心捐赠后台运营账号')
+ON DUPLICATE KEY UPDATE
+`role_name` = VALUES(`role_name`),
+`sort_order` = VALUES(`sort_order`),
+`status` = VALUES(`status`),
+`remark` = VALUES(`remark`);
 
--- 管理员和测试用户由 Spring Boot DataInitializer 自动创建（密码通过BCrypt实时加密）
+-- 初始化系统账号（BCrypt 密码）
 -- admin / admin123（管理员）
+-- charity / charity123（社团人员）
+INSERT INTO `sys_user`
+(`username`, `password`, `nickname`, `real_name`, `gender`, `status`, `balance`, `deleted`)
+VALUES
+('admin', '$2a$10$Edwng6lKAJRSCIOz7Bd0CeQsfZKe/HETt46N2I90VCOYCullEUnAK', '系统管理员', '管理员', 1, 1, 0.00, 0),
+('charity', '$2a$10$JJtiMWQSnDHTFjf29dC4kueI.GnbfIyOmJAILUS1OoB2Ngruic6C6', '社团人员', '社团人员', 1, 1, 0.00, 0)
+ON DUPLICATE KEY UPDATE
+`password` = VALUES(`password`),
+`nickname` = VALUES(`nickname`),
+`real_name` = VALUES(`real_name`),
+`gender` = VALUES(`gender`),
+`status` = VALUES(`status`),
+`balance` = VALUES(`balance`),
+`deleted` = VALUES(`deleted`);
+
+-- 绑定系统账号角色
+INSERT IGNORE INTO `sys_user_role` (`user_id`, `role_id`)
+SELECT u.id, r.id
+FROM `sys_user` u
+JOIN `sys_role` r ON r.role_key = 'ROLE_ADMIN'
+WHERE u.username = 'admin';
+
+INSERT IGNORE INTO `sys_user_role` (`user_id`, `role_id`)
+SELECT u.id, r.id
+FROM `sys_user` u
+JOIN `sys_role` r ON r.role_key = 'ROLE_CHARITY'
+WHERE u.username = 'charity';
+
+-- 普通测试用户由 Spring Boot DataInitializer 自动创建
 -- zhangsan, lisi, wangwu, zhaoliu, sunqi / 123456（普通用户）
 
 -- 初始化商品分类
